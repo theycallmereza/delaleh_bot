@@ -2,6 +2,7 @@ services:
   delaleh_bot_app:
     build: .
     command: python -m src
+    restart: always
 
   delaleh_bot_redis:
     image: redis:7.4.2-alpine
