@@ -3,3 +3,4 @@
 *.session
 *.pyc
 venv
+logs.txt

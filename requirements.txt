@@ -4,4 +4,5 @@ isort==5.13.2
 pre-commit==4.0.1
 Pyrogram==2.0.106
 python-decouple==3.8
+requests==2.32.3
 TgCrypto==1.2.5
