@@ -1,13 +1,6 @@
-from telegram import (
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
-    KeyboardButton,
-    ReplyKeyboardMarkup,
-    Update,
-)
+from telegram import KeyboardButton, ReplyKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
-from src import config
 from src.database import redis_store
 from src.logging import LOGGER
 from src.services.auth_service import AuthService
@@ -16,14 +9,19 @@ logger = LOGGER("DelalehBot")  # Logger instance for this file
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # Send a welcome message with a contact button
+    """
+    Handles the /start command. Sends a welcome message with a contact button.
+    """
+    logger.info(f"User {update.message.from_user.id} started the bot.")
     contact_button = KeyboardButton("اشتراک گذاری شماره موبایل", request_contact=True)
     keyboard = ReplyKeyboardMarkup([[contact_button]], resize_keyboard=True)
     await update.message.reply_text("خوش اومدی برای ادامه شماره تلگرام خودت رو ارسال کن", reply_markup=keyboard)
 
 
 async def handle_contact(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # Extract contact's mobile number and Telegram ID
+    """
+    Handles the user's contact sharing. Authenticates the user and stores tokens in Redis.
+    """
     contact = update.message.contact
     mobile_number = contact.phone_number
     telegram_id = str(update.message.from_user.id)
@@ -32,9 +30,10 @@ async def handle_contact(update: Update, context: ContextTypes.DEFAULT_TYPE):
     last_name = update.effective_user.last_name or ""
     language_code = update.effective_user.language_code or ""
 
+    logger.info(f"User {telegram_id} shared their contact: {mobile_number}")
+
     # Authenticate the user
     auth_service = AuthService(
-        api_key=config.SERVER_API_KEY,
         mobile_number=mobile_number,
         telegram_id=telegram_id,
         username=username,
@@ -45,22 +44,16 @@ async def handle_contact(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
         tokens = auth_service.login()
+        logger.info(f"User {telegram_id} authenticated successfully.")
+
         # Store tokens in Redis
         redis_store.set_token(telegram_id, tokens["access"], tokens["refresh"])
+        logger.info(f"Tokens stored in Redis for user {telegram_id}.")
 
-        # Create an inline button for 'Complete Profile'
-        keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("ساختن پروفایل", callback_data="complete_profile")]])
+        # Create a reply keyboard button for 'Complete Profile'
+        profile_button = KeyboardButton("/create_profile")
+        keyboard = ReplyKeyboardMarkup([[profile_button]], resize_keyboard=True)
         await update.message.reply_text("شمارت ثبت شد! برای ساختن پروفایل روی دکمه زیر بزن", reply_markup=keyboard)
     except Exception as e:
-        await update.message.reply_text(f"Error: {str(e)}")
-
-
-async def on_button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-
-    if query.data == "complete_profile":
-        # Handle profile completion
-        telegram_id = str(query.from_user.id)
-        access_token, refresh_token = redis_store.get_token(telegram_id)
-        await query.message.reply_text(f"Access: {access_token}\nRefresh: {refresh_token}")
+        logger.error(f"Error authenticating user {telegram_id}: {e}")
+        await update.message.reply_text("متاسفانه مشکلی پیش اومده. لطفا دوباره تلاش کن.")

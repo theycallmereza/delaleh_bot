@@ -2,23 +2,38 @@ import logging
 import os
 from logging.handlers import RotatingFileHandler
 
-# Removing old log files if they exist and starting logging from a fresh file.
-if os.path.exists("logs.txt"):
-    os.remove("logs.txt")
+# Constants
+LOG_FILE = "logs.txt"
+MAX_LOG_SIZE = 5_000_000  # 5 MB
+BACKUP_COUNT = 3
 
+# Remove old log file if it exists
+if os.path.exists(LOG_FILE):
+    os.remove(LOG_FILE)
+
+# Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format="[%(asctime)s - %(levelname)s] - %(name)s - %(message)s",
     datefmt="%d-%b-%y %H:%M:%S",
     handlers=[
-        RotatingFileHandler("logs.txt", mode="w+", maxBytes=5000000, backupCount=3),
+        RotatingFileHandler(LOG_FILE, mode="w+", maxBytes=MAX_LOG_SIZE, backupCount=BACKUP_COUNT),
         logging.StreamHandler(),
     ],
 )
 
-# Suppressing pyrogram INFO messages.
+# Suppress INFO messages from external libraries
 logging.getLogger("pyrogram").setLevel(logging.ERROR)
 
 
 def LOGGER(name: str) -> logging.Logger:
+    """
+    Returns a logger instance with the given name.
+
+    Args:
+        name (str): The name of the logger.
+
+    Returns:
+        logging.Logger: A configured logger instance.
+    """
     return logging.getLogger(name)

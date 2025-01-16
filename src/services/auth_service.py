@@ -1,13 +1,13 @@
 import requests
 
-from src.config import API_BASE_URL
+from src.config import API_BASE_URL, SERVER_API_KEY
 
 
 class AuthService:
     BASE_URL = API_BASE_URL
 
-    def __init__(self, api_key, mobile_number, telegram_id, username, first_name, last_name, language_code):
-        self.api_key = api_key
+    def __init__(self, mobile_number, telegram_id, username, first_name, last_name, language_code):
+        self.api_key = SERVER_API_KEY
         self.mobile_number = mobile_number
         self.telegram_id = telegram_id
         self.username = username
