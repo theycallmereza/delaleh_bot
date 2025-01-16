@@ -2,7 +2,7 @@ import sys
 import time
 from asyncio import get_event_loop, new_event_loop, set_event_loop
 
-from pyrogram import Client
+from telegram.ext import Application
 
 from src import config
 from src.logging import LOGGER
@@ -39,5 +39,4 @@ LOGGER(__name__).info(
 
 
 LOGGER(__name__).info("initiating the client....")
-plugins = dict(root="src/plugins")  # https://docs.pyrogram.org/topics/smart-plugins
-bot = Client("DelalehBot", api_id=config.API_ID, api_hash=config.API_HASH, bot_token=config.BOT_TOKEN, plugins=plugins)
+bot = Application.builder().token(config.BOT_TOKEN).build()

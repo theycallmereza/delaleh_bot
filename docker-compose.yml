@@ -1,9 +1,15 @@
 services:
   delaleh_bot_app:
+    container_name: delaleh_bot_app
     build: .
     command: python -m src
     restart: always
+    volumes:
+      - .:/app
+    depends_on:
+      - delaleh_bot_redis
 
   delaleh_bot_redis:
+    container_name: delaleh_bot_redis
     image: redis:7.4.2-alpine
     restart: unless-stopped
