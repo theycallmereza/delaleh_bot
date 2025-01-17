@@ -8,5 +8,12 @@ class STATES(Enum):
     BIO = 3
     IMAGE = 4
     LOCATION = 5
-    LATITUDE = 6
-    LONGITUDE = 7
+
+
+class UpdateProfileStates(Enum):
+    NAME = 1
+    BIRTH_DATE = 2
+    HEIGHT = 3
+    BIO = 4
+    IMAGE = 5
+    LOCATION = 6

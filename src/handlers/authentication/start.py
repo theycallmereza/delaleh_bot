@@ -1,5 +1,5 @@
 from telegram import KeyboardButton, ReplyKeyboardMarkup, Update
-from telegram.ext import ContextTypes
+from telegram.ext import CommandHandler, ContextTypes, MessageHandler, filters
 
 from src.database import redis_store
 from src.logging import LOGGER
@@ -57,3 +57,8 @@ async def handle_contact(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         logger.error(f"Error authenticating user {telegram_id}: {e}")
         await update.message.reply_text("متاسفانه مشکلی پیش اومده. لطفا دوباره تلاش کن.")
+
+
+def start_handlers(bot):
+    bot.add_handler(CommandHandler("start", start))
+    bot.add_handler(MessageHandler(filters.CONTACT, handle_contact))

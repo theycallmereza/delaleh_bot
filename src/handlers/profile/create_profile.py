@@ -2,13 +2,20 @@ from io import BytesIO
 
 from khayyam import JalaliDate
 from telegram import Update
-from telegram.ext import ContextTypes, ConversationHandler
+from telegram.ext import (
+    CommandHandler,
+    ContextTypes,
+    ConversationHandler,
+    MessageHandler,
+    filters,
+)
 
 from src.constant import STATES
+from src.handlers.profile.base_handlers import cancel
 from src.logging import LOGGER
 from src.services.profile_service import ProfileService
 
-logger = LOGGER("DelalehBot")  # Logger instance for this file
+logger = LOGGER("CreateProfileHandlers")  # Logger instance for this file
 
 
 # Command: /create_profile
@@ -126,12 +133,35 @@ async def show_profile(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     response = profile_service.update_profile(profile_data)
     logger.info(f"User {update.message.from_user.id} completed profile creation.")
-    await update.message.reply_text(response)
+
+    # Format the caption
+    caption = (
+        f"اسم: {response['name']}\n"
+        f"سن: {response['age']}\n"
+        f"قد: {response['height']} \n"
+        f"شهر: {response['location']} \n"
+        f"درباره من: {response['bio']}\n"
+    )
+    # Send the photo with the caption
+    await update.message.reply_photo(
+        photo=response["image"],
+        caption=caption,
+    )
     return ConversationHandler.END  # End the conversation
 
 
-# Command: /cancel (to cancel the conversation)
-async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    logger.info(f"User {update.message.from_user.id} canceled profile creation.")
-    await update.message.reply_text("Profile creation canceled.")
-    return ConversationHandler.END
+def create_profile_handler(bot):
+    # Conversation handler for /create_profile
+    create_profile_conv_handler = ConversationHandler(
+        entry_points=[CommandHandler("create_profile", create_profile)],
+        states={
+            STATES.NAME.value: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_name)],
+            STATES.BIRTH_DATE.value: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_birth_date)],
+            STATES.BIO.value: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_bio)],
+            STATES.HEIGHT.value: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_height)],
+            STATES.IMAGE.value: [MessageHandler(filters.PHOTO | filters.TEXT, handle_image)],
+            STATES.LOCATION.value: [MessageHandler(filters.LOCATION | filters.TEXT, handle_location)],
+        },
+        fallbacks=[CommandHandler("cancel_create", cancel)],
+    )
+    bot.add_handler(create_profile_conv_handler)
